@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Wyniki</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #002857;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #003399;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            width: 80%;
+        }
+
+        li {
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        strong {
+            color: #003399;
+        }
+
+        button {
+            background-color: #0070c0;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #005b9a;
+        }
+
+        a {
+            color: #0070c0;
+            text-decoration: none;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        #status-message {
+            margin-top: 20px;
+            font-size: 1em;
+            color: #005b9a;
+        }
+
+        .filter-button, .sort-button {
+            background-color: #0070c0;
+            color: #ffffff;
+            border: none;
+            padding: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin: 5px;
+        }
+
+        .filter-button:hover, .sort-button:hover {
+            background-color: #005b9a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wyniki</h1>
+    <div>
+        <button class="filter-button" onclick="filterResults('volvo')">Pokaż tylko volvo</button>
+        <button class="filter-button" onclick="filterResults('dostawcze')">Pokaż tylko dostawcze</button>
+        <button class="filter-button" onclick="filterResults('ciezarowe')">Pokaż tylko ciężarówki</button>
+        <button class="sort-button" onclick="sortResults('model', 'asc')">Sortuj alfabetycznie (Tytuł) A-Z</button>
+        <button class="sort-button" onclick="sortResults('model', 'desc')">Sortuj alfabetycznie (Tytuł) Z-A</button>
+    </div>
+    <ul id="results-list">
+    {% for result in results %}
+        <li>
+            <strong>Tytuł:</strong> {{ result.model }}<br>
+            <strong>Cena:</strong> {{ result.cena | replace("zł", "zł ") }}<br>
+            <strong>Rok-Przebieg:</strong> {{ result.rok_przebieg }}<br>
+            <strong>Lokalizacja:</strong> {{ result.lokalizacja }}
+        </li>
+    {% endfor %}
+    </ul>
+    <button id="save-button">Zapisz</button>
+    <p id="status-message"></p>
+    <a href="{{ url_for('index') }}">Powrót</a>
+
+    <script>
+        function sortResults(sort_by, order) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const category = urlParams.get('category') || '';
+            window.location.href = `{{ url_for('results') }}?sort_by=${sort_by}&order=${order}&category=${category}`;
+        }
+
+        function filterResults(category) {
+            window.location.href = `{{ url_for('results') }}?category=${category}`;
+        }
+
+        document.getElementById('save-button').addEventListener('click', function() {
+            fetch('/save_to_mongo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ results: {{ results | tojson }} })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status-message').textContent = data.message;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

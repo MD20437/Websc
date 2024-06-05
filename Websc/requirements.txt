@@ -1,0 +1,6 @@
+Flask
+Werkzeug
+pymongo
+requests
+beautifulsoup4
+aiohttp
